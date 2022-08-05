@@ -17,7 +17,7 @@ const (
 
 	sqlGetByIDStmts = `SELECT id, name, manufacturer, price, stock, tags
 					FROM products 
-					WHERE id = ANY($1)`
+					WHERE id = $1`
 )
 
 type ProductRepository struct {
@@ -55,7 +55,7 @@ func (p *ProductRepository) Save(product exam_api_domain.Product) (string, bool,
 func (p *ProductRepository) Get(id string) (exam_api_domain.Product, bool, error) {
 	ctx := context.Background()
 
-	rows, err := p.db.QueryContext(ctx, sqlGetByIDStmts, pq.Array(id))
+	rows, err := p.db.QueryContext(ctx, sqlGetByIDStmts, id)
 	if err != nil {
 		return exam_api_domain.Product{}, false, err
 	}
