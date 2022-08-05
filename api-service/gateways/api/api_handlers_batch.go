@@ -32,8 +32,9 @@ func (api *API) createProductMemoryBatch(req *restful.Request, resp *restful.Res
 		id, alreadyExists, _ := api.storage.Save(products[i])
 		if alreadyExists {
 			errors = append(errors, "object already exist")
+		} else {
+			savedProducts = append(savedProducts, id)
 		}
-		savedProducts = append(savedProducts, id)
 	}
 
 	_ = resp.WriteAsJson(map[string][]string{
@@ -61,10 +62,11 @@ func (api *API) getProductMemoryBatch(req *restful.Request, resp *restful.Respon
 
 	for i := range ids {
 		id, notExist, _ := api.storage.Get(ids[i])
-		if notExist {
+		if !notExist {
 			errors = append(errors, "object not exist")
+		} else {
+			products = append(products, id)
 		}
-		products = append(products, id)
 	}
 
 	_ = resp.WriteAsJson(map[string][]domain.Product{
@@ -98,14 +100,14 @@ func (api *API) updateProductMemoryBatch(req *restful.Request, resp *restful.Res
 			log.Infof("Product %s not in store", id)
 			_ = resp.WriteError(http.StatusNotFound, fmt.Errorf("product not found"))
 			return
+		} else {
+			newProduct := existedProduct
+			newProduct.Stock = id.Diff.Stock
+			newProduct.Price = id.Diff.Price
+			newProduct.Tags = id.Diff.Tags
+
+			_, _, err = api.storage.Save(newProduct)
 		}
-
-		newProduct := existedProduct
-		newProduct.Stock = id.Diff.Stock
-		newProduct.Price = id.Diff.Price
-		newProduct.Tags = id.Diff.Tags
-
-		_, _, err = api.storage.Save(newProduct)
 	}
 }
 
