@@ -32,8 +32,9 @@ func (s *Service) StartWebService() {
 	restful.Add(ws)
 
 	storage := memory.NewStore()
+	//mycLIE := remote.NewClient(http.Client{})
 
-	apiManager := api.NewAPI(storage)
+	apiManager := api.NewAPI(storage) /*, client)*/
 	apiManager.RegisterRoutes(ws)
 
 	log.Printf("Started api service on port 8080")
