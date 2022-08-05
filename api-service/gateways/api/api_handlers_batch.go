@@ -44,7 +44,37 @@ func (api *API) createProductMemoryBatch(req *restful.Request, resp *restful.Res
 }
 
 func (api *API) getProductMemoryBatch(req *restful.Request, resp *restful.Response) {
-	panic("TODO")
+	var ids []string
+	body, err := ioutil.ReadAll(req.Request.Body)
+	if err != nil {
+		log.Errorf("Failed to read product, err=%v", err)
+		_ = resp.WriteError(http.StatusBadRequest, err)
+		return
+	}
+	err = json.Unmarshal(body, &ids)
+	if err != nil {
+		log.Errorf("Failed to unmarshal, err=%v", err)
+		_ = resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	var errors []string
+	var products []domain.Product
+
+	for i := range ids {
+		id, alreadyExists, err := api.storage.Get(ids[i])
+		if err != nil {
+			errors = append(errors, "internal error")
+		}
+		if alreadyExists {
+			errors = append(errors, "object already exist")
+		}
+		products = append(products, id)
+	}
+
+	_ = resp.WriteAsJson(map[string][]domain.Product{
+		"products:": products,
+	})
 }
 
 func (api *API) updateProductMemoryBatch(req *restful.Request, resp *restful.Response) {
