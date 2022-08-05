@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"exam-api/domain"
+	"fmt"
 	"github.com/emicklei/go-restful/v3"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -78,7 +79,40 @@ func (api *API) getProductMemoryBatch(req *restful.Request, resp *restful.Respon
 }
 
 func (api *API) updateProductMemoryBatch(req *restful.Request, resp *restful.Response) {
-	panic("TODO")
+	var products []domain.ProductDiff
+	body, err := ioutil.ReadAll(req.Request.Body)
+	if err != nil {
+		log.Errorf("Failed to read product, err=%v", err)
+		_ = resp.WriteError(http.StatusBadRequest, err)
+		return
+	}
+	err = json.Unmarshal(body, &products)
+	if err != nil {
+		log.Errorf("Failed to unmarshal, err=%v", err)
+		_ = resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	for _, id := range products {
+		existedProduct, exists, err := api.storage.Get(id.ID)
+		if err != nil {
+			log.Errorf("Failed to get product from storage, err=%v", err)
+			_ = resp.WriteError(http.StatusInternalServerError, fmt.Errorf("failed to get product from store"))
+			return
+		}
+		if !exists {
+			log.Infof("Product %s not in store", id)
+			_ = resp.WriteError(http.StatusNotFound, fmt.Errorf("product not found"))
+			return
+		}
+
+		newProduct := existedProduct
+		newProduct.Stock = id.Diff.Stock
+		newProduct.Price = id.Diff.Price
+		newProduct.Tags = id.Diff.Tags
+
+		_, _, err = api.storage.Save(newProduct)
+	}
 }
 
 func (api *API) deleteProductMemoryBatch(req *restful.Request, resp *restful.Response) {
