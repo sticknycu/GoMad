@@ -2,6 +2,7 @@ package memory
 
 import (
 	"exam-api/domain"
+	"fmt"
 	"sync"
 )
 
@@ -16,6 +17,7 @@ type Store struct {
 	// At most one goroutine is writing in the map and none are reading or;
 	// No goroutine is writing and any number are reading
 	mu sync.RWMutex
+	wg sync.WaitGroup
 }
 
 func NewStore() *Store {
@@ -35,6 +37,8 @@ func (s *Store) Save(product domain.Product) (string, bool, error) {
 		return product.GetHash(), true, nil
 	}
 	s.products[product.GetHash()] = product
+	s.wg.Done()
+
 	return product.GetHash(), false, nil
 }
 
@@ -51,9 +55,40 @@ func (s *Store) Get(id string) (domain.Product, bool, error) {
 }
 
 func (s *Store) Update(id string, diff domain.Product) (bool, error) {
-	panic("TODO")
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	_, ok := s.products[id]
+	if !ok {
+		return false, nil
+	}
+
+	newProduct := s.products[id]
+
+	if diff.Name != newProduct.Name {
+		newProduct.Name = diff.Name
+	}
+	if diff.Price != newProduct.Price {
+		newProduct.Price = diff.Price
+	}
+	if diff.Stock != newProduct.Stock {
+		newProduct.Stock = diff.Stock
+	}
+
+	s.products[id] = newProduct
+	return true, nil
 }
 
 func (s *Store) Delete(id string) (bool, error) {
-	panic("TODO")
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	p, ok := s.products[id]
+	fmt.Println(p)
+	if !ok {
+		return false, nil
+	}
+
+	delete(s.products, id)
+	return true, nil
 }
