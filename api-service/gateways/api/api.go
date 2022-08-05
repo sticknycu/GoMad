@@ -2,7 +2,6 @@ package api
 
 import (
 	"exam-api/domain"
-
 	"github.com/emicklei/go-restful/v3"
 )
 
@@ -19,11 +18,13 @@ const (
 
 type API struct {
 	storage domain.Storage
+	//client http.Client
 }
 
-func NewAPI(store domain.Storage) *API {
+func NewAPI(store domain.Storage /*, client http.Client*/) *API {
 	return &API{
 		storage: store,
+		//client: client,
 	}
 }
 
@@ -39,8 +40,9 @@ func (api *API) RegisterRoutes(ws *restful.WebService) {
 	ws.Route(ws.PATCH(memoryRootPath + productPath + versionBatch).To(api.updateProductMemoryBatch))
 	ws.Route(ws.DELETE(memoryRootPath + productPath + versionBatch).To(api.deleteProductMemoryBatch))
 
-	// TODO create similar routes that use the store service. For this you will need to create
+	// create similar routes that use the store service. For this you will need to create
 	// a http client that implemets the domain.Storage interface and add it to the api.
 	// The handlers should be similar to those using memory storage
 
+	//-----DONE DAR METODELE EXISTA IN CLIENT.GO
 }
