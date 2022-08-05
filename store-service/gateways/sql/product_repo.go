@@ -15,6 +15,10 @@ const (
 					VALUES ($1, $2, $3, $4, $5, $6) 
 					RETURNING id, name, manufacturer, price, stock, tags`
 
+	sqlUpdateStmt = `UPDATE products
+					SET price = $2, stock = $3, tags = $4
+					WHERE id = $1`
+
 	sqlGetByIDStmts = `SELECT id, name, manufacturer, price, stock, tags
 					FROM products 
 					WHERE id = $1`
@@ -100,18 +104,14 @@ func (p *ProductRepository) Update(id string, diff exam_api_domain.Product) (boo
 	}
 
 	product := existingProduct
-	product.Name = diff.Name
 	product.Tags = diff.Tags
 	product.Stock = diff.Stock
 	product.Price = diff.Price
-	product.Manufacturer = diff.Manufacturer
 
 	row := p.db.QueryRowContext(
 		ctx,
-		sqlCreateStmt,
+		sqlUpdateStmt,
 		[]byte(id),
-		[]byte(product.Name),
-		[]byte(product.Manufacturer),
 		product.Price,
 		product.Stock,
 		pq.Array(product.Tags))
