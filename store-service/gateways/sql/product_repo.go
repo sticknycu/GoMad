@@ -18,6 +18,9 @@ const (
 	sqlGetByIDStmts = `SELECT id, name, manufacturer, price, stock, tags
 					FROM products 
 					WHERE id = $1`
+
+	sqlDeleteByIDStmts = `DELETE FROM products 
+					WHERE id = $1`
 )
 
 type ProductRepository struct {
@@ -90,9 +93,43 @@ func (p *ProductRepository) Get(id string) (exam_api_domain.Product, bool, error
 }
 
 func (p *ProductRepository) Update(id string, diff exam_api_domain.Product) (bool, error) {
-	return false, nil
+	ctx := context.Background()
+	existingProduct, exists, err := p.Get(id)
+	if !exists || err != nil {
+		log.Errorf("Failed to find product, err=%v", err)
+	}
+
+	product := existingProduct
+	product.Name = diff.Name
+	product.Tags = diff.Tags
+	product.Stock = diff.Stock
+	product.Price = diff.Price
+	product.Manufacturer = diff.Manufacturer
+
+	row := p.db.QueryRowContext(
+		ctx,
+		sqlCreateStmt,
+		[]byte(id),
+		[]byte(product.Name),
+		[]byte(product.Manufacturer),
+		product.Price,
+		product.Stock,
+		pq.Array(product.Tags))
+
+	if row.Err() != nil {
+		return false, row.Err()
+	}
+
+	return false, row.Err()
 }
 
 func (p *ProductRepository) Delete(id string) (bool, error) {
-	return false, nil
+	ctx := context.Background()
+
+	rows, err := p.db.QueryContext(ctx, sqlDeleteByIDStmts, id)
+	if err != nil || rows.Err() != nil {
+		log.Errorf("An error has occured while deleting an item, err=", err)
+		return false, err
+	}
+	return true, nil
 }
