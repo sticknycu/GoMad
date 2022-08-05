@@ -29,10 +29,7 @@ func (api *API) createProductMemoryBatch(req *restful.Request, resp *restful.Res
 	var savedProducts []string
 
 	for i := range products {
-		id, alreadyExists, err := api.storage.Save(products[i])
-		if err != nil {
-			errors = append(errors, "internal error")
-		}
+		id, alreadyExists, _ := api.storage.Save(products[i])
 		if alreadyExists {
 			errors = append(errors, "object already exist")
 		}
@@ -40,7 +37,7 @@ func (api *API) createProductMemoryBatch(req *restful.Request, resp *restful.Res
 	}
 
 	_ = resp.WriteAsJson(map[string][]string{
-		"id object inserted": savedProducts,
+		"ids objects inserted": savedProducts,
 	})
 }
 
@@ -48,7 +45,7 @@ func (api *API) getProductMemoryBatch(req *restful.Request, resp *restful.Respon
 	var ids []string
 	body, err := ioutil.ReadAll(req.Request.Body)
 	if err != nil {
-		log.Errorf("Failed to read product, err=%v", err)
+		log.Errorf("Failed to read ids, err=%v", err)
 		_ = resp.WriteError(http.StatusBadRequest, err)
 		return
 	}
@@ -63,12 +60,9 @@ func (api *API) getProductMemoryBatch(req *restful.Request, resp *restful.Respon
 	var products []domain.Product
 
 	for i := range ids {
-		id, alreadyExists, err := api.storage.Get(ids[i])
-		if err != nil {
-			errors = append(errors, "internal error")
-		}
-		if alreadyExists {
-			errors = append(errors, "object already exist")
+		id, notExist, _ := api.storage.Get(ids[i])
+		if notExist {
+			errors = append(errors, "object not exist")
 		}
 		products = append(products, id)
 	}
@@ -116,5 +110,33 @@ func (api *API) updateProductMemoryBatch(req *restful.Request, resp *restful.Res
 }
 
 func (api *API) deleteProductMemoryBatch(req *restful.Request, resp *restful.Response) {
-	panic("TODO")
+	var ids []string
+	body, err := ioutil.ReadAll(req.Request.Body)
+	if err != nil {
+		log.Errorf("Failed to read ids, err=%v", err)
+		_ = resp.WriteError(http.StatusBadRequest, err)
+		return
+	}
+	err = json.Unmarshal(body, &ids)
+	if err != nil {
+		log.Errorf("Failed to unmarshal, err=%v", err)
+		_ = resp.WriteError(http.StatusInternalServerError, err)
+		return
+	}
+
+	var errors []string
+	var products []string
+
+	for i := range ids {
+		deleted, _ := api.storage.Delete(ids[i])
+		if !deleted {
+			errors = append(errors, "object not exist")
+		} else {
+			products = append(products, ids[i])
+		}
+	}
+
+	_ = resp.WriteAsJson(map[string][]string{
+		"Ids objects deleted:": products,
+	})
 }

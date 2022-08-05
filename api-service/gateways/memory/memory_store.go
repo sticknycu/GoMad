@@ -2,7 +2,6 @@ package memory
 
 import (
 	"exam-api/domain"
-	"fmt"
 	"sync"
 )
 
@@ -81,8 +80,7 @@ func (s *Store) Delete(id string) (bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	p, ok := s.products[id]
-	fmt.Println(p)
+	_, ok := s.products[id]
 	if !ok {
 		return false, nil
 	}
