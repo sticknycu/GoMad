@@ -44,16 +44,11 @@ func (api *API) createProductMemoryBatch(req *restful.Request, resp *restful.Res
 
 func (api *API) getProductMemoryBatch(req *restful.Request, resp *restful.Response) {
 	var ids []string
-	body, err := ioutil.ReadAll(req.Request.Body)
-	if err != nil {
-		log.Errorf("Failed to read ids, err=%v", err)
-		_ = resp.WriteError(http.StatusBadRequest, err)
-		return
-	}
-	err = json.Unmarshal(body, &ids)
-	if err != nil {
-		log.Errorf("Failed to unmarshal, err=%v", err)
-		_ = resp.WriteError(http.StatusInternalServerError, err)
+
+	ids = req.QueryParameters("ids")
+	if len(ids) == 0 {
+		log.Printf("[ERROR] Failed to read ids")
+		resp.WriteError(http.StatusBadRequest, fmt.Errorf("ids must be provided"))
 		return
 	}
 
@@ -113,16 +108,11 @@ func (api *API) updateProductMemoryBatch(req *restful.Request, resp *restful.Res
 
 func (api *API) deleteProductMemoryBatch(req *restful.Request, resp *restful.Response) {
 	var ids []string
-	body, err := ioutil.ReadAll(req.Request.Body)
-	if err != nil {
-		log.Errorf("Failed to read ids, err=%v", err)
-		_ = resp.WriteError(http.StatusBadRequest, err)
-		return
-	}
-	err = json.Unmarshal(body, &ids)
-	if err != nil {
-		log.Errorf("Failed to unmarshal, err=%v", err)
-		_ = resp.WriteError(http.StatusInternalServerError, err)
+
+	ids = req.QueryParameters("ids")
+	if len(ids) == 0 {
+		log.Printf("[ERROR] Failed to read ids")
+		resp.WriteError(http.StatusBadRequest, fmt.Errorf("ids must be provided"))
 		return
 	}
 
