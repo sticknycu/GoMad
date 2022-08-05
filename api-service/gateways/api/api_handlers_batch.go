@@ -25,19 +25,22 @@ func (api *API) createProductMemoryBatch(req *restful.Request, resp *restful.Res
 	}
 
 	var errors []string
-	var savedProducts []domain.Product
+	var savedProducts []string
 
 	for i := range products {
-		_, alreadyExists, err := api.storage.Save(products[i])
+		id, alreadyExists, err := api.storage.Save(products[i])
 		if err != nil {
 			errors = append(errors, "internal error")
 		}
 		if alreadyExists {
 			errors = append(errors, "object already exist")
 		}
-		products = append(savedProducts, products[i])
-
+		savedProducts = append(savedProducts, id)
 	}
+
+	_ = resp.WriteAsJson(map[string][]string{
+		"id object inserted": savedProducts,
+	})
 }
 
 func (api *API) getProductMemoryBatch(req *restful.Request, resp *restful.Response) {

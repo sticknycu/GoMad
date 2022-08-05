@@ -17,7 +17,6 @@ type Store struct {
 	// At most one goroutine is writing in the map and none are reading or;
 	// No goroutine is writing and any number are reading
 	mu sync.RWMutex
-	wg sync.WaitGroup
 }
 
 func NewStore() *Store {
@@ -37,7 +36,6 @@ func (s *Store) Save(product domain.Product) (string, bool, error) {
 		return product.GetHash(), true, nil
 	}
 	s.products[product.GetHash()] = product
-	s.wg.Done()
 
 	return product.GetHash(), false, nil
 }
