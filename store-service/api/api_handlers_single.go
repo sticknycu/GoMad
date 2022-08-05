@@ -80,28 +80,25 @@ func (api *API) getProductSingle(req *restful.Request, resp *restful.Response) {
 }
 
 func (api *API) updateProductSingle(req *restful.Request, resp *restful.Response) {
-	id := req.QueryParameter("id")
-	if id == "" {
-		log.Infof("No id provided in request")
-		_ = resp.WriteError(http.StatusBadRequest, fmt.Errorf("id must be provided"))
-		return
-	}
-
-	productDiff := domain.Product{}
+	productDiff := domain.ProductDiff{}
 	err := req.ReadEntity(productDiff)
 	if err != nil {
 		log.Printf("[ERROR] Failed to read user, err=%v", err)
 		resp.WriteError(http.StatusBadRequest, err)
 		return
 	}
-	_, err = api.storage.Update(id, productDiff)
+	_, err = api.storage.Update(productDiff.ID, domain.Product{
+		Stock: productDiff.Diff.Stock,
+		Price: productDiff.Diff.Price,
+		Tags:  productDiff.Diff.Tags,
+	})
 	if err != nil {
 		log.Printf("[ERROR] User does not exist to database")
 		resp.WriteError(http.StatusConflict, fmt.Errorf("user does not exists"))
 		return
 	}
 
-	log.Printf("Product with id %d has been updated to database", id)
+	log.Printf("Product with id %d has been updated to database", productDiff.ID)
 
 	respData := make(map[string]string)
 	respData["message"] = "Status OK"
